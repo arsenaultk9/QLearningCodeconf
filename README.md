@@ -1,2 +1,2 @@
 # Codeconf
-Code of applications use as demo for ConFoo
+Code of demo application used for ConFoo conference 2025
