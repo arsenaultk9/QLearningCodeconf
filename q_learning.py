@@ -1,4 +1,4 @@
-import gym
+import gymnasium as gym
 import numpy as np
 
 # Création de l'environnement FrozenLake (non glissant pour simplifier la démonstration)
