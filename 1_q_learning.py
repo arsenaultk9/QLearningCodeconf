@@ -2,7 +2,10 @@ import gymnasium as gym
 import numpy as np
 
 # Création de l'environnement FrozenLake (non glissant pour simplifier la démonstration)
-env = gym.make("FrozenLake-v1", is_slippery=False, render_mode="human")
+game = "FrozenLake-v1"
+env = gym.make(game, is_slippery=False, render_mode="human")
+num_episodes = 1000  # Nombre d'épisodes réduit pour la démo
+show_every = 100
 
 # Récupération du nombre d'états et d'actions
 n_states = env.observation_space.n
@@ -12,19 +15,29 @@ n_actions = env.action_space.n
 Q_table = np.zeros((n_states, n_actions))
 
 # Paramètres d'apprentissage
-learning_rate = 5         # Taux d'apprentissage plus élevé pour des mises à jour plus rapides
-discount_factor = 0.5       # Facteur d'actualisation abaissé pour privilégier les récompenses immédiates
-num_episodes = 40         # Nombre d'épisodes réduit pour la démo
-max_steps = 30              # Nombre maximal d'étapes par épisode réduit
+learning_rate = 5  # Taux d'apprentissage plus élevé pour des mises à jour plus rapides
+discount_factor = (
+    0.5  # Facteur d'actualisation abaissé pour privilégier les récompenses immédiates
+)
+max_steps = 30  # Nombre maximal d'étapes par épisode réduit
 
 # Paramètres d'exploration (epsilon-greedy)
-epsilon = 0.4               # Début avec une forte exploration
-max_epsilon = 0.8
+epsilon = 0.7  # Début avec une forte exploration
 min_epsilon = 0.09
 # On utilisera une décroissance multiplicative pour une diminution progressive plus rapide
-epsilon_decay = 0.99
+epsilon_decay = 0.999
 
 for episode in range(num_episodes):
+    show_episode = episode % show_every == 0
+    render_mode = "human" if (episode % show_every) == 0 else None
+
+    if show_episode:
+        print(f"Episode {episode}, epsilon={epsilon}")
+        print("Q Table :")
+        print(Q_table)
+
+    env = gym.make(game, render_mode=render_mode)
+
     state, _ = env.reset()
     done = False
 
@@ -34,22 +47,28 @@ for episode in range(num_episodes):
             action = env.action_space.sample()
         else:
             action = np.argmax(Q_table[state, :])
-        
+
         new_state, reward, terminated, truncated, info = env.step(action)
         done = terminated or truncated
 
         # Reward shaping : si l'épisode se termine et que la récompense est 0,
         # on considère que l'agent est tombé dans un trou et on pénalise fortement.
         if done and reward == 0:
-            reward = -10
-        
+            reward = -1
+
+        # Indiqué lorsque gagné
+        if done and reward == 1:
+            print(f"Episode {episode} gagné en {step} étapes")
+
         # Mise à jour de la Q-table selon la formule du Q-learning
         Q_table[state, action] = Q_table[state, action] + learning_rate * (
-            reward + discount_factor * np.max(Q_table[new_state, :]) - Q_table[state, action]
+            reward
+            + discount_factor * np.max(Q_table[new_state, :])
+            - Q_table[state, action]
         )
-        
+
         state = new_state
-        
+
         if done:
             break
 
