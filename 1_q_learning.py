@@ -27,6 +27,25 @@ min_epsilon = 0.0000009
 # On utilisera une décroissance multiplicative pour une diminution progressive plus rapide
 epsilon_decay = 0.99
 
+def select_action(state):
+    # Sélection de l'action avec stratégie epsilon-greedy
+    if np.random.uniform(0, 1) < epsilon:
+        action = env.action_space.sample()
+    else:
+        action = np.argmax(Q_table[state, :])
+        
+    return action
+
+def optimize_q_function(state, action, next_state, reward):
+    # Mise à jour de la Q-table selon la formule du Q-learning
+    # Belman equation: 𝑄(𝑠,𝑎)←𝑄(𝑠,𝑎)+𝛼( 𝑟+ 𝛾max𝑎′𝑄(𝑠′,𝑎′)−𝑄(𝑠,𝑎))
+    
+    Q_table[state, action] = Q_table[state, action] + learning_rate * (
+        reward
+        + discount_factor * np.max(Q_table[new_state, :])
+        - Q_table[state, action]
+    )
+
 for episode in range(num_episodes):
     show_episode = episode % show_every == 0
     render_mode = "human" if (episode % show_every) == 0 else None
@@ -42,12 +61,8 @@ for episode in range(num_episodes):
     done = False
 
     for step in range(max_steps):
-        # Sélection de l'action avec stratégie epsilon-greedy
-        if np.random.uniform(0, 1) < epsilon:
-            action = env.action_space.sample()
-        else:
-            action = np.argmax(Q_table[state, :])
-
+        action = select_action(state)
+        
         new_state, reward, terminated, truncated, info = env.step(action)
         done = terminated or truncated
 
@@ -60,12 +75,7 @@ for episode in range(num_episodes):
         if done and reward == 1:
             print(f"Episode {episode} gagné en {step} étapes")
 
-        # Mise à jour de la Q-table selon la formule du Q-learning
-        Q_table[state, action] = Q_table[state, action] + learning_rate * (
-            reward
-            + discount_factor * np.max(Q_table[new_state, :])
-            - Q_table[state, action]
-        )
+        optimize_q_function(state, action, new_state, reward)
 
         state = new_state
 

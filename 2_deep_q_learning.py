@@ -1,7 +1,6 @@
 import gymnasium as gym
 import random
 import math
-import numpy as np
 
 import torch
 import torch.nn as nn
@@ -18,14 +17,6 @@ show_every = 100
 n_states = env.observation_space.n
 n_actions = env.action_space.n
 
-# Initialisation de la Q-table
-Q_table = np.zeros((n_states, n_actions))
-
-# Paramètres d'apprentissage
-learning_rate = 5  # Taux d'apprentissage plus élevé pour des mises à jour plus rapides
-discount_factor = (
-    0.5  # Facteur d'actualisation abaissé pour privilégier les récompenses immédiates
-)
 max_steps = 30  # Nombre maximal d'étapes par épisode réduit
 
 # TODO: Enlever l'epsilon de l'ancien
@@ -75,6 +66,7 @@ steps_done = 0
 def select_action(state):
     global steps_done
     sample = random.random()
+    
     eps_threshold = EPS_END + (EPS_START - EPS_END) * \
         math.exp(-1. * steps_done / EPS_DECAY)
     steps_done += 1
@@ -100,16 +92,6 @@ def optimize_model(state, action, next_state, reward):
     next_state_encodings = torch.zeros(n_states)
     next_state_encodings[next_state] = 1
 
-    # Compute a mask of non-final states and concatenate the batch elements
-    # (a final state would've been the one after which simulation ended)
-    # non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
-    #                                       next_state)), device=device, dtype=torch.bool)
-    # non_final_next_states = torch.cat([s for s in next_state
-    #                                             if s is not None])
-    # state_batch = torch.cat(state)
-    # action_batch = torch.cat(action)
-    # reward_batch = torch.cat(reward)
-
     action_batch = torch.tensor([action])
     reward_batch = torch.tensor([reward])
 
@@ -126,8 +108,8 @@ def optimize_model(state, action, next_state, reward):
     # state value or 0 in case the state was final.
     next_state_values = torch.zeros(1, device=device)
     with torch.no_grad():
-        # next_state_values[non_final_mask] = target_net(non_final_next_states).max(1).values
         next_state_values[0] = target_net(next_state_encodings).max(0).values
+        
     # Compute the expected Q values
     expected_state_action_values = (next_state_values * GAMMA) + reward_batch
 
@@ -138,6 +120,7 @@ def optimize_model(state, action, next_state, reward):
     # Optimize the model
     optimizer.zero_grad()
     loss.backward()
+    
     # In-place gradient clipping
     torch.nn.utils.clip_grad_value_(policy_net.parameters(), 100)
     optimizer.step()
@@ -194,7 +177,7 @@ state, _ = env.reset()
 env.render()
 done = False
 while not done:
-    action = np.argmax(Q_table[state, :])
+    action = select_action(state)
     state, reward, terminated, truncated, info = env.step(action)
     env.render()
     done = terminated or truncated
