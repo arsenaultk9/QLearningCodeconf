@@ -23,18 +23,18 @@ max_steps = 30  # Nombre maximal d'étapes par épisode réduit
 
 # Paramètres d'exploration (epsilon-greedy)
 epsilon = 0.7  # Début avec une forte exploration
-min_epsilon = 0.09
+min_epsilon = 0.0000009
 # On utilisera une décroissance multiplicative pour une diminution progressive plus rapide
-epsilon_decay = 0.999
+epsilon_decay = 0.99
 
 for episode in range(num_episodes):
     show_episode = episode % show_every == 0
     render_mode = "human" if (episode % show_every) == 0 else None
 
     if show_episode:
-        print(f"Episode {episode}, epsilon={epsilon}")
-        print("Q Table :")
-        print(Q_table)
+        print(f"==== Episode {episode}, epsilon={epsilon}")
+        # print("Q Table :")
+        # print(Q_table)
 
     env = gym.make(game, render_mode=render_mode)
 

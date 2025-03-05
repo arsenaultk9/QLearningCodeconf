@@ -149,7 +149,7 @@ for episode in range(num_episodes):
     render_mode = "human" if (episode % show_every) == 0 else None
 
     if show_episode:
-        print(f"Episode {episode}, epsilon={epsilon}")
+        print(f"==== Episode {episode}, epsilon={math.exp(-1. * steps_done / EPS_DECAY)}")
 
     env = gym.make(game, render_mode=render_mode)
 
@@ -188,9 +188,6 @@ for episode in range(num_episodes):
         target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
         
     target_net.load_state_dict(target_net_state_dict)
-
-print("Table Q finale :")
-print(Q_table)
 
 # Test de la politique (Strategie) apprise
 state, _ = env.reset()
